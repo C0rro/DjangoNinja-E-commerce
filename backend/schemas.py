@@ -48,6 +48,8 @@ class OrderSchema(ModelSchema):
     class Config:
         model = Order
         model_fields = [
+            'id',
+            'status',
             'email',
             'total_price',
             'products',

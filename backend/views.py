@@ -80,3 +80,6 @@ def checkout(request):
 
 def user_page(request):
     return render(request, "user_page.html")
+
+def user_orders(request):
+    return render(request, "user_order.html")

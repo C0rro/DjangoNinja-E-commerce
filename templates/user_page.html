@@ -56,7 +56,7 @@
 
             <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
 
-                <a href="" class="card bg-white shadow-xl hover:shadow-2xl hover:bg-gray-50 transition-all duration-300 transform hover:scale-[1.02]">
+                <a href="/user_orders/" class="card bg-white shadow-xl hover:shadow-2xl hover:bg-gray-50 transition-all duration-300 transform hover:scale-[1.02]">
                     <div class="card-body p-6">
                         <div class="text-5xl text-accent mb-3">
                             <i class="fas fa-receipt"></i>
@@ -85,7 +85,7 @@
             </div>
 
             <div class="text-center mt-12">
-                <button  class="btn btn-outline btn-error btn-wide" onclick="logout();">
+                <button  class="btn text-white btn-error btn-wide" onclick="logout();">
                     <i class="fas fa-sign-out-alt mr-2"></i> Esci dall'Account
                 </button>
             </div>
@@ -121,7 +121,12 @@
 
                 authenticatedContent.classList.remove('hidden');
 
-            } else {
+            } else if (response.status === 401 || response.status === 403) {
+                unauthenticatedContent.classList.remove('hidden');
+
+                loginLink.href = `/login/`;
+
+            }else {
                 loadingStatus.classList.remove('hidden');
                 loadingStatus.innerHTML = '<p class="text-xl font-bold text-error">Errore: Impossibile verificare l\'autenticazione.</p>';
             }

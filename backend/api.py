@@ -7,7 +7,6 @@ from django.http import HttpRequest, HttpResponse
 from django.utils import timezone
 from uuid import UUID
 
-from django.views.decorators.csrf import csrf_exempt
 from ninja import NinjaAPI
 from django.shortcuts import get_object_or_404, redirect
 from backend.models import Peperoncino, Product, Order
@@ -52,15 +51,6 @@ def get_product_by_id(request, id: str):
     product = get_object_or_404(Product, id=id)
     return product
 
-@app.post("/peperoncini/modifica/{id}/", response=PeperoncinoSchema)
-def update_peperoncino(request, id: UUID, data: PeperoncinoUpdateSchema):
-    peperoncino = get_object_or_404(Peperoncino, id=id)
-
-    for attr, value in data.dict(exclude_unset=True).items():
-        setattr(peperoncino, attr, value)
-
-    peperoncino.save()
-    return peperoncino
 
 @app.get("/peperoncini/", response=list[PeperoncinoSchema])
 def get_peperoncini(request):
@@ -69,6 +59,11 @@ def get_peperoncini(request):
 @app.get("/protected", auth=SessionAuth(), response=UserSchema)
 def protected_view(request):
     return request.auth
+
+@app.get("/user_page/ordini/", auth=SessionAuth(), response=list[OrderSchema])
+def user_order_view(request):
+    user = request.user
+    return Order.objects.filter(user=user)
 
 
 @app.post("/login/")

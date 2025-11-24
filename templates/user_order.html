@@ -1,0 +1,151 @@
+{% extends "base.html" %}
+{% block title %}I Miei Ordini{% endblock %}
+
+{% block content %}
+
+<div class="container mx-auto p-4 sm:p-10">
+    <div class="max-w-4xl mx-auto">
+
+        <header class="mb-8 text-center">
+            <h1 class="text-4xl font-extrabold text-gray-900">Storico Ordini</h1>
+            <p class="text-gray-500 mt-2">Visualizza e monitora lo stato di tutti i tuoi acquisti.</p>
+        </header>
+
+        <div id="orders-container">
+            <div id="loading-state" class="flex justify-center items-center h-64 bg-base-100 rounded-xl shadow-inner">
+                <span class="loading loading-ring loading-lg text-primary"></span>
+                <p class="ml-4 text-xl font-semibold text-gray-600">Caricamento ordini in corso...</p>
+            </div>
+
+            <div id="empty-state" class="hidden text-center bg-base-200 p-12 rounded-xl border border-dashed border-gray-300">
+                <div class="text-6xl text-info mb-4">
+                    <i class="fas fa-search"></i>
+                </div>
+                <h2 class="text-2xl font-bold text-gray-800">Nessun Ordine Trovato</h2>
+                <p class="text-gray-600 mt-2">Sembra che tu non abbia ancora effettuato acquisti. Inizia subito lo shopping!</p>
+                <a href="{% url 'shop' %}" class="btn btn-primary mt-6">Vai al Negozio</a>
+            </div>
+
+            <div id="orders-list" class="space-y-6 hidden">
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<script>
+    const ORDERS_API_URL = '/app/user_page/ordini/';
+
+    const loadingState = document.getElementById('loading-state');
+    const emptyState = document.getElementById('empty-state');
+    const ordersList = document.getElementById('orders-list');
+
+    const statusMap = {
+        'PENDING': { label: 'In Attesa', color: 'badge-warning' },
+        'PROCESSING': { label: 'In Elaborazione', color: 'badge-info' },
+        'SHIPPED': { label: 'Spedito', color: 'badge-success' },
+        'DELIVERED': { label: 'Consegnato', color: 'badge-primary' },
+        'CANCELLED': { label: 'Cancellato', color: 'badge-error' }
+    };
+
+    /**
+     * Formatta il prezzo in valuta (es. € 49.99).
+     */
+    function formatCurrency(amount) {
+        return new Intl.NumberFormat('it-IT', { style: 'currency', currency: 'EUR' }).format(amount);
+    }
+
+    /**
+     * Crea un singolo elemento CARD per l'ordine.
+     */
+    function createOrderCard(order) {
+        const { label, color } = statusMap[order.status] || { label: 'Sconosciuto', color: 'badge-neutral' };
+        const orderDate = new Date(order.created_at).toLocaleDateString('it-IT');
+        const totalProducts = Object.keys(order.products || {}).length;
+
+        const card = document.createElement('div');
+        card.className = 'card bg-white shadow-lg border border-gray-100 transition-all duration-300 hover:shadow-xl';
+
+        card.innerHTML = `
+            <div class="card-body p-6">
+                <div class="flex flex-col md:flex-row justify-between items-start md:items-center border-b pb-4 mb-4">
+
+                    <div class="mb-4 md:mb-0">
+                        <h2 class="card-title text-xl font-bold text-gray-800">
+                            Ordine ID: <span class="font-normal text-sm text-gray-500">${order.id.substring(0, 8)}...</span>
+                        </h2>
+                        <p class="text-sm text-gray-500">Effettuato il: ${orderDate}</p>
+                    </div>
+
+                    <div class="flex items-center space-x-4">
+                        <div class="text-right">
+                            <p class="text-xs text-gray-500">Totale Ordine</p>
+                            <p class="text-2xl font-bold text-primary">${formatCurrency(order.total_price)}</p>
+                        </div>
+                        <div class="badge ${color} text-white font-bold">${label}</div>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm text-gray-600">
+                    <p><strong>Spedito a:</strong> ${order.shipping_name}</p>
+                    <p><strong>Email:</strong> ${order.email}</p>
+                    <p><strong>Prodotti:</strong> ${totalProducts} articoli</p>
+                    <p><strong>Indirizzo:</strong> ${order.shipping_address}, ${order.shipping_city}</p>
+                </div>
+
+                <div class="card-actions justify-end mt-4">
+                    <!-- Link fittizio per vedere i dettagli dell'ordine -->
+                    <button class="btn btn-sm btn-ghost hover:text-primary">Dettagli Ordine <i class="fas fa-external-link-alt ml-1"></i></button>
+                </div>
+            </div>
+        `;
+
+        return card;
+    }
+
+    /**
+     * Recupera gli ordini dall'API.
+     */
+    async function fetchOrders() {
+        loadingState.classList.remove('hidden');
+        ordersList.classList.add('hidden');
+        emptyState.classList.add('hidden');
+
+        try {
+            const response = await fetch(ORDERS_API_URL);
+
+            if (response.status === 200) {
+                const orders = await response.json();
+
+                if (orders.length === 0) {
+                    // Nessun ordine trovato
+                    emptyState.classList.remove('hidden');
+                } else {
+                    // Ordini trovati: renderizza la lista
+                    orders.forEach(order => {
+                        ordersList.appendChild(createOrderCard(order));
+                    });
+                    ordersList.classList.remove('hidden');
+                }
+
+            } else if (response.status === 401 || response.status === 403) {
+                // Utente non autenticato (anche se l'API è protetta, è un buon fallback)
+                alert("Non sei autenticato. Verrai reindirizzato al login.");
+                window.location.href = `/login/?next=${encodeURIComponent(window.location.pathname)}`;
+
+            } else {
+                // Errore generico
+                alert(`Errore nel caricamento degli ordini: ${response.status}`);
+            }
+
+        } catch (error) {
+            console.error("Errore di rete:", error);
+            alert("Errore di connessione. Impossibile contattare il server.");
+        } finally {
+            loadingState.classList.add('hidden');
+        }
+    }
+
+    document.addEventListener('DOMContentLoaded', fetchOrders);
+</script>
+{% endblock %}
