@@ -1,0 +1,115 @@
+{% extends "base.html" %}
+{% block title %}Test Login{% endblock %}
+
+{% block content %}
+
+<form id="csrf-form" style="display: none;">
+    {% csrf_token %}
+</form>
+
+<div class="flex justify-center p-8">
+
+    <form id="login-form" class="card bg-base-100 shadow-xl w-full max-w-sm p-6 space-y-4">
+
+        {% csrf_token %} <h1 class="card-title text-2xl justify-center">Accesso Utente Semplice</h1>
+
+        <p id="feedback-message" class="text-error text-center hidden"></p>
+
+        <div class="form-control">
+            <label for="username" class="label">
+                <span class="label-text">Nome Utente</span>
+            </label>
+            <input type="text" id="username" name="username" class="input input-bordered w-full" placeholder="Il tuo username" required />
+        </div>
+
+        <div class="form-control">
+            <label for="password" class="label">
+                <span class="label-text">Password</span>
+            </label>
+            <input type="password" id="password" name="password" class="input input-bordered w-full" placeholder="La tua password" required />
+        </div>
+
+        <div class="card-actions justify-center pt-4">
+            <button type="button" id="login-button" onclick="loginClicked();" class="btn btn-primary text-white w-full">
+                Login
+            </button>
+        </div>
+    </form>
+</div>
+
+<script>
+    const LOGIN_URL = '/app/login/'; // Assicurati che l'URL sia corretto
+
+    /**
+     * Recupera il token CSRF dal campo input nascosto nel DOM.
+     * @returns {string|null} Il valore del token CSRF.
+     */
+    function getCsrfTokenFromDom() {
+        const input = document.querySelector('input[name="csrfmiddlewaretoken"]');
+        return input ? input.value : null;
+    }
+
+    function loginClicked(){
+        username = document.getElementById("username").value;
+        password = document.getElementById("password").value;
+        console.log(username,password)
+        testLogin(username,password)
+    }
+    /**
+     * Esegue la chiamata AJAX cablata per il login.
+     */
+    async function testLogin(username,password) {
+        const csrftoken = getCsrfTokenFromDom();
+
+        if (!csrftoken) {
+            errorMessageElement.textContent = 'Errore di sicurezza: Token CSRF mancante.';
+            errorMessageElement.classList.remove('hidden');
+            return;
+        }
+
+
+        const payload = {
+            "username": username,
+            "password": password
+        };
+
+        try {
+            const response = await fetch(LOGIN_URL, {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': csrftoken,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(payload),
+                credentials: 'include',
+            });
+
+            if (response.ok) {
+                errorMessageElement.textContent = "✅ Login riuscito! Controlla gli header 'Application' e 'Network'.";
+                errorMessageElement.classList.remove('hidden');
+                errorMessageElement.classList.remove('text-error');
+                errorMessageElement.classList.add('text-success');
+
+            } else {
+                let errorMessage = `Errore di accesso: ${response.status}`;
+                try {
+                    const responseData = await response.json();
+                    errorMessage = responseData.message || errorMessage;
+                } catch (e) {
+
+                }
+                errorMessageElement.textContent = errorMessage;
+                errorMessageElement.classList.remove('hidden');
+            }
+
+        } catch (error) {
+            errorMessageElement.textContent = 'Errore di connessione. Impossibile contattare il server.';
+            errorMessageElement.classList.remove('hidden');
+            console.error("Errore di rete durante il login:", error);
+
+        } finally {
+            location.replace(document.referrer);
+        }
+    }
+</script>
+{% endblock %}

@@ -1,0 +1,10 @@
+POST http://localhost:8000/app/peperoncini/modifica/5b80dd84-cdec-4cc1-af74-d545992f249a/
+Content-Type: application/json
+
+{
+  "name": "Jalapeno",
+  "family": "string",
+  "description": "string",
+  "scoville": 0,
+  "image": "string"
+}

@@ -1,0 +1,161 @@
+{% extends "base.html" %}
+{% block title %}Carrello{% endblock %}
+
+{% block content %}
+
+<form id="csrf-form" style="display: none;">
+    {% csrf_token %}
+</form>
+
+<div>
+    <div class="overflow-x-auto">
+        <table class="table w-full">
+            <thead>
+                <tr>
+                    <th>Immagine</th>
+                    <th>Nome</th>
+                    <th>Quantità</th>
+                    <th>Prezzo</th>
+                    <th>Rimuovi</th>
+                </tr>
+            </thead>
+            <tbody id="cart-table-body">
+                </tbody>
+        </table>
+    </div>
+    <div class="flex justify-end">
+        <button class="btn btn-primary text-white" id="checkout" onclick="location.href='/shop/checkout';">Checkout</button>
+    </div>
+</div>
+
+<script>
+    const cart = JSON.parse('{{ cart|safe|escapejs }}');
+    const tableBody = document.getElementById("cart-table-body");
+    console.log(cart);
+
+
+    function getCsrfTokenFromDom() {
+        const input = document.querySelector('#csrf-form input[name="csrfmiddlewaretoken"]');
+        return input ? input.value : null;
+    }
+
+
+    async function handleRemove(productId) {
+        const csrftoken = getCsrfTokenFromDom();
+        const removeUrl = `/shop/rimuovi_dal_carrello/${productId}`;
+
+        if (!csrftoken) {
+            alert('Errore di sicurezza: Token CSRF mancante. Ricarica la pagina.');
+            return;
+        }
+
+        try {
+            const response = await fetch(removeUrl, {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': csrftoken, // Invia il token
+                    'Content-Type': 'application/json'
+                }
+            });
+
+            if (response.ok) {
+                window.location.reload();
+            } else {
+                const errorData = await response.json();
+                alert(`Errore: ${errorData.message || 'Rimozione fallita.'}`);
+            }
+
+        } catch (error) {
+            console.error("Errore di rete durante la rimozione:", error);
+            alert('Errore di rete. Impossibile connettersi al server.');
+        }
+    }
+
+
+
+    function createTableRow(product, product_quantity) {
+        const row = document.createElement("tr");
+        const productId = product.id;
+        const total_price = product.price * product_quantity;
+
+        // 1. Cella Immagine
+        const imageCell = document.createElement("td");
+        const image = document.createElement("img");
+        image.src = product.peperoncino.image;
+        image.className = "rounded-lg w-24 object-cover my-2";
+        image.style.maxHeight = "4rem";
+        imageCell.appendChild(image);
+
+        // 2. Cella Nome
+        const nameCell = document.createElement("th");
+        nameCell.textContent = product.peperoncino.name;
+        nameCell.innerHTML = `
+            <a href="/shop/${productId}/" class="link link-hover font-bold">
+            ${product.peperoncino.name}
+            </a>
+            `;
+
+        // 3. Cella Quantità
+        const quantityCell = document.createElement("td");
+        quantityCell.textContent = product_quantity;
+
+        // 4. Cella Prezzo Totale
+        const priceCell = document.createElement("td");
+        priceCell.textContent = `${total_price.toFixed(2)} €`;
+
+        // 5. Cella Rimuovi (Bottone)
+        const removeCell = document.createElement("td");
+        const removeButton = document.createElement("div");
+        removeButton.className = "btn btn-ghost btn-circle btn-sm text-error";
+        removeButton.setAttribute('role', 'button');
+        removeButton.setAttribute('aria-label', `Rimuovi ${product.peperoncino.name}`);
+
+        removeButton.innerHTML = `
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 stroke-current" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+            </svg>
+        `;
+
+
+        removeButton.addEventListener('click', () => handleRemove(productId));
+
+        removeCell.appendChild(removeButton);
+
+
+        row.appendChild(imageCell);
+        row.appendChild(nameCell);
+        row.appendChild(quantityCell);
+        row.appendChild(priceCell);
+        row.appendChild(removeCell);
+
+        tableBody.appendChild(row);
+    }
+
+    async function loadCartData() {
+        const cartKeys = Object.keys(cart);
+
+        for (const key of cartKeys) {
+            const quantity = cart[key].quantity;
+
+            try {
+                const response = await fetch(`/app/products/${key}`);
+
+                if (!response.ok) {
+                    throw new Error(`Errore HTTP: ${response.status} per ID ${key}`);
+                }
+
+                const product = await response.json();
+
+                createTableRow(product, quantity);
+
+            } catch (error) {
+                console.error("Non è stato possibile caricare il prodotto", key, error);
+            }
+        }
+        console.log("Caricamento carrello completato.");
+    }
+
+    loadCartData();
+
+</script>
+{% endblock %}

@@ -1,0 +1,89 @@
+{% extends "base.html" %}
+{% block title %}Homepage Peperoncini Shop{% endblock %}
+
+{% block content %}
+
+<div class="hero bg-base-300 rounded-box mb-10 p-8 bg-[url(media/images/static/sfondo_home.jpg)]">
+    <div class="hero-content text-center text-white">
+        <div class="max-w-md">
+            <h1 class="text-4xl sm:text-5xl font-bold">Benvenuto su PeppersBro!</h1>
+            <p class="py-6">Scopri le nostre ultime selezioni di semi e salse. La passione per il piccante inizia qui.</p>
+            <a href="/shop" class="btn btn-primary text-white">Esplora il Catalogo</a>
+        </div>
+    </div>
+</div>
+
+<h2 class="text-2xl sm:text-3xl font-bold mb-4">🌶️ Novità in Arrivo</h2>
+
+<div class="flex overflow-x-scroll gap-4 pb-4 snap-x snap-mandatory scroll-p-4">
+    <div id="product-grid" class="flex gap-4">
+        </div>
+</div>
+
+
+<script>
+    function createProductCard(product) {
+        const grid = document.getElementById("product-grid");
+
+        // 1. Elemento Link (<a>)
+        const cardLink = document.createElement("a");
+        cardLink.className = "card bg-base-100 shadow-xl transition duration-300 ease-in-out hover:shadow-2xl hover:scale-[1.02] flex-shrink-0 snap-start w-[90%] sm:w-[45%] md:w-[30%] lg:w-1/4 ";
+        cardLink.href = `/shop/${product.id}/`;
+
+        // 2. Contenuto della Card (<div>)
+        const cardBody = document.createElement("div");
+        cardBody.className = "card-body items-center text-center p-8";
+
+        // 3. Titolo (<h2>)
+        const title = document.createElement("h2");
+        title.className = "card-title text-xl font-semibold h-14 line-clamp-2";
+        title.textContent = product.peperoncino.name;
+
+        // 4. Immagine (<img>)
+        const image = document.createElement("img");
+        image.src = product.peperoncino.image;
+        image.alt = `Peperoncino ${product.peperoncino.name}`;
+        // w-full per adattarsi alla larghezza della card
+        image.className = "rounded-lg w-full h-40 object-cover my-2 **object-center**";
+
+
+        // 5. Livello Scoville (<p>)
+        const scoville = document.createElement("p");
+        scoville.className = "text-sm text-warning font-bold";
+        scoville.textContent = `Scoville: ${product.peperoncino.scoville.toLocaleString('it-IT')}`;
+
+
+
+        // Assemblaggio
+        cardBody.appendChild(title);
+        cardBody.appendChild(scoville);
+        cardBody.appendChild(image);
+
+        cardLink.appendChild(cardBody);
+
+        grid.appendChild(cardLink);
+    }
+
+    // Funzione principale per il recupero dei dati
+    fetch("/app/products/")
+        .then(response => {
+            if (!response.ok) throw new Error('Network response not ok');
+            return response.json();
+        })
+        .then(data => {
+            data.forEach(createProductCard);
+        })
+        .catch(error => {
+            console.error("Errore nel caricamento dei prodotti:", error);
+            document.getElementById("product-grid").innerHTML =
+                '<p class="text-error">Non è stato possibile caricare i prodotti. Riprova più tardi.</p>';
+        });
+
+    // Aggiunto listener per il pulsante SHOP
+    document.getElementById("go-to-shop").addEventListener('click', function() {
+        window.location.href = "/shop";
+    });
+</script>
+
+
+{% endblock %}

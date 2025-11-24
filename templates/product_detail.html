@@ -1,0 +1,125 @@
+{% extends "base.html" %}
+{% block title %}Dettaglio Prodotto{% endblock %}
+
+{% block content %}
+
+<button
+    class="btn btn-ghost mb-6"
+    onclick="history.back()">
+    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+    </svg>
+    Torna allo Shop
+</button>
+
+<div class="card bg-base-100 shadow-xl p-4 sm:p-8">
+
+    <div class="flex flex-col lg:flex-row lg:gap-12">
+
+        <div class="w-full lg:w-1/2 p-4 flex flex-col justify-center items-center">
+
+            <div class="carousel w-full max-w-lg rounded-box shadow-md" id="product-carousel">
+                <div class="carousel-item w-full justify-center">
+                    <img id="product-image-1"
+                         class="w-auto h-auto max-h-96 object-contain"
+                         alt="Immagine principale del peperoncino" />
+                </div>
+
+                </div>
+            </div>
+
+        <div class="w-full lg:w-1/2 p-4 space-y-4">
+
+            <p class="text-xs text-info uppercase tracking-widest">PeppersBro</p>
+
+            <h1 class="text-3xl sm:text-4xl font-extrabold" id="product-name"></h1>
+
+            <div class="flex items-center justify-between border-t border-base-200 pt-4">
+                <p class="text-2xl font-bold text-primary" id="product-price"></p>
+
+                <button class="btn btn-primary btn-lg" onclick="aggiungi_al_carrello()">
+                    Aggiungi al Carrello
+                </button>
+            </div>
+
+            <div class="divider">Dettagli</div>
+
+            <p class="text-base text-base-content leading-relaxed whitespace-pre-line" id="product-description"></p>
+        </div>
+    </div>
+</div>
+
+<script>
+const id = "{{ id }}";
+
+const apiUrl = `/app/products/${id}/`;
+
+fetch(apiUrl)
+  .then(res => {
+      if (!res.ok) throw new Error("Errore nel caricamento del prodotto");
+      return res.json();
+  })
+  .then(product => {
+      // Assumendo che l'oggetto product.peperoncino.image contenga l'URL principale.
+      const data = product.peperoncino;
+
+      document.getElementById("product-name").textContent = data.name;
+
+      // Carica l'immagine principale nel carosello placeholder
+      document.getElementById("product-image-1").src = data.image;
+      document.getElementById("product-image-1").alt = data.name;
+
+      document.getElementById("product-price").textContent = `Prezzo: ${product.price} €`;
+      document.getElementById("product-description").textContent = data.description;
+
+      // NOTA: Se il tuo modello include un campo 'gallery' (es. un array di URL)
+      // dovresti iterare qui per creare dinamicamente più div.carousel-item.
+
+  })
+  .catch(err => {
+      console.error(err);
+      document.getElementById("product-name").textContent = "Prodotto non trovato.";
+      document.getElementById("product-name").className = "text-error text-center p-10";
+  });
+
+
+
+function getCookie() {
+    const input = document.querySelector('#csrf-form input[name="csrfmiddlewaretoken"]');
+    return input ? input.value : null;
+}
+
+async function aggiungi_al_carrello() {
+    const csrftoken = getCookie();
+    if (!csrftoken) { alert("Errore di sicurezza: Token CSRF mancante."); return; }
+
+    const btn = document.querySelector('.btn-primary');
+    btn.disabled = true;
+    btn.textContent = 'Aggiunta...';
+
+    try {
+        const response = await fetch(`/shop/aggiungi_al_carrello/${id}`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': csrftoken
+            }
+        });
+
+        const data = await response.json();
+
+        if (response.ok) {
+            alert(data.message);
+        } else {
+            alert(`Errore: ${data.message}`);
+        }
+
+    } catch (error) {
+        alert('Errore di connessione. Riprova più tardi.');
+    } finally {
+        btn.disabled = false;
+        btn.textContent = 'Aggiungi al Carrello';
+    }
+}
+</script>
+{% endblock %}

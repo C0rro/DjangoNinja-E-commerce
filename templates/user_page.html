@@ -1,0 +1,179 @@
+{% extends "base.html" %}
+{% block title %}Il Mio Profilo{% endblock %}
+
+{% block content %}
+
+<div class="container mx-auto p-4 sm:p-12">
+    <div class="max-w-4xl mx-auto">
+
+        <header class="mb-10 text-center">
+            <h1 class="text-4xl font-extrabold text-gray-900">Il Mio Account</h1>
+            <p class="text-gray-500 mt-2">Gestisci le tue informazioni, ordini e preferenze.</p>
+        </header>
+
+        <div id="loading-status" class="flex justify-center items-center h-48 bg-base-100 rounded-xl shadow-inner">
+            <span class="loading loading-ring loading-lg text-primary"></span>
+            <p class="ml-4 text-xl font-semibold text-gray-600">Caricamento dashboard...</p>
+        </div>
+
+        <div id="unauthenticated-content" class="hidden">
+            <div class="hero bg-base-100 rounded-xl border border-gray-200 shadow-lg p-12">
+                <div class="hero-content flex-col lg:flex-row text-center lg:text-left ">
+                    <div class="text-6xl text-warning lg:mr-8 mb-4 lg:mb-0">
+                        <i class="fas fa-user-lock"></i>
+                    </div>
+                    <div>
+                        <h2 class="text-3xl font-bold text-gray-800 mb-2">Accesso Non Effettuato</h2>
+                        <p class="text-gray-600 mb-6">
+                            Accedi per visualizzare la cronologia degli ordini, salvare gli indirizzi di spedizione e modificare le impostazioni.
+                        </p>
+                        <div class="space-x-4">
+                            <a id="login-link" href="/login/" class="btn btn-primary btn-lg text-white">
+                                <i class="fas fa-sign-in-alt mr-2 "></i> Accedi al tuo Account
+                            </a>
+                            <a href="" class="btn btn-ghost btn-lg text-primary">
+                                Registrati
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="authenticated-content" class="hidden">
+            <div class="stats stats-vertical lg:stats-horizontal w-full bg-primary text-primary-content rounded-xl shadow-lg mb-8 text-white">
+                <div class="stat p-6">
+                    <div class="stat-title text-white opacity-90">Accesso Riuscito</div>
+                    <div id="welcome-message" class="stat-value text-3xl">Caricamento...</div>
+                    <div class="stat-desc text-white opacity-70">Benvenuto nella tua area riservata.</div>
+                </div>
+                <div class="stat hidden lg:block">
+                     <div class="stat-figure text-white text-3xl"><i class="fas fa-box"></i></div>
+                     <div class="stat-title text-white opacity-90">Ordini Totali</div>
+                     <div class="stat-value text-xl">N/D</div>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+
+                <a href="" class="card bg-white shadow-xl hover:shadow-2xl hover:bg-gray-50 transition-all duration-300 transform hover:scale-[1.02]">
+                    <div class="card-body p-6">
+                        <div class="text-5xl text-accent mb-3">
+                            <i class="fas fa-receipt"></i>
+                        </div>
+                        <h3 class="card-title text-2xl font-bold text-gray-800">Cronologia Ordini</h3>
+                        <p class="text-gray-500">Visualizza, traccia e gestisci tutti i tuoi acquisti precedenti e attuali.</p>
+                        <span class="mt-4 text-accent font-semibold flex items-center">
+                            Vai alla pagina Ordini <i class="fas fa-chevron-right ml-2 text-sm"></i>
+                        </span>
+                    </div>
+                </a>
+
+                <a href="" class="card bg-white shadow-xl hover:shadow-2xl hover:bg-gray-50 transition-all duration-300 transform hover:scale-[1.02]">
+                    <div class="card-body p-6">
+                        <div class="text-5xl text-secondary mb-3">
+                            <i class="fas fa-address-card"></i>
+                        </div>
+                        <h3 class="card-title text-2xl font-bold text-gray-800">Modifica Profilo</h3>
+                        <p class="text-gray-500">Aggiorna le tue informazioni di contatto, gli indirizzi di spedizione e la password.</p>
+                        <span class="mt-4 text-secondary font-semibold flex items-center">
+                            Modifica i Dati <i class="fas fa-chevron-right ml-2 text-sm"></i>
+                        </span>
+                    </div>
+                </a>
+
+            </div>
+
+            <div class="text-center mt-12">
+                <button  class="btn btn-outline btn-error btn-wide" onclick="logout();">
+                    <i class="fas fa-sign-out-alt mr-2"></i> Esci dall'Account
+                </button>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<script>
+
+    const PROTECTED_URL = '/app/protected'; // Usa l'URL corretto del tuo Django Ninja
+
+
+    const loadingStatus = document.getElementById('loading-status');
+    const unauthenticatedContent = document.getElementById('unauthenticated-content');
+    const authenticatedContent = document.getElementById('authenticated-content');
+    const loginLink = document.getElementById('login-link');
+    const welcomeMessage = document.getElementById('welcome-message');
+    const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+
+    /**
+     * Controlla lo stato di autenticazione e mostra il contenuto appropriato.
+     */
+    async function checkAuthStatus() {
+        try {
+            // La richiesta invia il cookie di sessione (se presente)
+            const response = await fetch(PROTECTED_URL);
+            loadingStatus.classList.add('hidden'); // Nasconde lo stato di caricamento
+
+            if (response.ok) {
+                const data = await response.json();
+
+                welcomeMessage.textContent = `Benvenuto, ${data.first_name || data.email}!`;
+
+                authenticatedContent.classList.remove('hidden');
+
+            } else if (response.status === 401 || response.status === 403) {
+                unauthenticatedContent.classList.remove('hidden');
+
+                // Configura il link di login per tornare a questa pagina
+                const currentPath = window.location.pathname;
+
+                // Costruisce l'URL di login con il parametro 'next'
+                // Esempio: /login/?next=/profile/
+                loginLink.href = `/login/?next=${encodeURIComponent(currentPath)}`;
+
+            } else {
+                loadingStatus.classList.remove('hidden');
+                loadingStatus.innerHTML = '<p class="text-xl font-bold text-error">Errore: Impossibile verificare l\'autenticazione.</p>';
+            }
+
+        } catch (error) {
+            console.error("Errore di rete:", error);
+            loadingStatus.classList.remove('hidden');
+            loadingStatus.innerHTML = '<p class="text-xl font-bold text-error">Errore di connessione. Riprova più tardi.</p>';
+        }
+    }
+
+
+
+    async function logout(){
+
+        try {
+            const response = await fetch('/app/logout/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': csrfToken,
+                },
+            });
+            if (response.ok) {
+                const result = await response.json();
+                alert("Logout effettuato con successo");
+                window.location.href = '/';
+
+            } else {
+                const errorData = await response.json();
+                console.error("Errore Dettagliato:", errorData);
+                alert(`Errore'}`);
+            }
+
+        } catch (error) {
+            console.error("Errore di rete durante il checkout:", error);
+            alert("Errore di connessione. Impossibile completare l'ordine.");
+
+        }
+    }
+
+    document.addEventListener('DOMContentLoaded', checkAuthStatus);
+</script>
+{% endblock %}
