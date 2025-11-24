@@ -1,0 +1,22 @@
+
+.venv/
+venv/
+env/
+__pycache__/
+*.pyc
+
+.idea/
+.vscode/  # Se usi anche VS Code
+*.iml
+
+db.sqlite3
+*.mo
+*.po
+*.pot
+*.log
+
+/media/
+
+.env
+.flaskenv
+settings_local.py
