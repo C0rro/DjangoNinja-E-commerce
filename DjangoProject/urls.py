@@ -15,7 +15,6 @@ urlpatterns = [
     path('shop/checkout', checkout, name='carrello'),
     path('login/', login, name='login'),
     path('user_page/', user_page, name='user'),
-
     path('shop/<str:id>/', peperoncini, name='product_detail'),
     path('shop/aggiungi_al_carrello/<str:id>', aggiungi_al_carrello, name='aggiungi al carrello'),
     path('shop/rimuovi_dal_carrello/<str:id>', rimuovi_dal_carrello, name='rimuovi dal carrello'),

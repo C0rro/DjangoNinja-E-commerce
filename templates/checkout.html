@@ -85,7 +85,6 @@
      */
     async function logUser() {
         try {
-            // La richiesta invia automaticamente il cookie di sessione (se presente)
             const response = await fetch("/app/protected");
 
             if (response.ok) {
@@ -160,8 +159,6 @@
             console.error("Errore di rete durante il checkout:", error);
             alert("Errore di connessione. Impossibile completare l'ordine.");
         } finally {
-            //submitButton.classList.remove('loading');
-            //submitButton.disabled = false;
             window.location.href = `./`;
         }
     }

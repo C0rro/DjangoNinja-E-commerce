@@ -108,6 +108,9 @@ def crea_ordine(request: HttpRequest, payload: OrderSchema):
         shipping_postal_code=payload.shipping_postal_code,
         shipping_phone=payload.shipping_phone,
     )
+    if 'cart' in request.session:
+        del request.session['cart']
+        request.session.modified = True
 
     return 200, {"id": ordine.id, "message": "Ordine creato con successo."}
 

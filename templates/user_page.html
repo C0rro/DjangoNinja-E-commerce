@@ -96,7 +96,7 @@
 
 <script>
 
-    const PROTECTED_URL = '/app/protected'; // Usa l'URL corretto del tuo Django Ninja
+    const PROTECTED_URL = '/app/protected';
 
 
     const loadingStatus = document.getElementById('loading-status');
@@ -111,9 +111,8 @@
      */
     async function checkAuthStatus() {
         try {
-            // La richiesta invia il cookie di sessione (se presente)
             const response = await fetch(PROTECTED_URL);
-            loadingStatus.classList.add('hidden'); // Nasconde lo stato di caricamento
+            loadingStatus.classList.add('hidden');
 
             if (response.ok) {
                 const data = await response.json();
@@ -121,16 +120,6 @@
                 welcomeMessage.textContent = `Benvenuto, ${data.first_name || data.email}!`;
 
                 authenticatedContent.classList.remove('hidden');
-
-            } else if (response.status === 401 || response.status === 403) {
-                unauthenticatedContent.classList.remove('hidden');
-
-                // Configura il link di login per tornare a questa pagina
-                const currentPath = window.location.pathname;
-
-                // Costruisce l'URL di login con il parametro 'next'
-                // Esempio: /login/?next=/profile/
-                loginLink.href = `/login/?next=${encodeURIComponent(currentPath)}`;
 
             } else {
                 loadingStatus.classList.remove('hidden');

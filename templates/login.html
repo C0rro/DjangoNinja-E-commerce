@@ -38,7 +38,7 @@
 </div>
 
 <script>
-    const LOGIN_URL = '/app/login/'; // Assicurati che l'URL sia corretto
+    const LOGIN_URL = '/app/login/';
 
     /**
      * Recupera il token CSRF dal campo input nascosto nel DOM.
@@ -85,7 +85,7 @@
             });
 
             if (response.ok) {
-                errorMessageElement.textContent = "✅ Login riuscito! Controlla gli header 'Application' e 'Network'.";
+                errorMessageElement.textContent = "Login riuscito!";
                 errorMessageElement.classList.remove('hidden');
                 errorMessageElement.classList.remove('text-error');
                 errorMessageElement.classList.add('text-success');
